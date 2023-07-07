@@ -27,13 +27,12 @@ def condition_number(A):
 def generate_random_matrix(m, n, condition_number):
     U, _, Vt = np.linalg.svd(np.random.randn(m, n), full_matrices=False)
     singular_values = np.linspace(1, condition_number, min(m, n))
-    singular_values = np.pad(singular_values, (0, max(m, n) - min(m, n)), mode='constant')
-    return np.dot(U * singular_values, Vt)
+    A = np.dot(U * singular_values, Vt)
+    return A
 
 # Parámetros
 m = 100
 n = 100
-s = 1 / np.linalg.norm(generate_random_matrix(m, n, 1), ord=2)
 target_error = 1e-2
 max_iterations = 10000
 num_condition_values = [1, 10, 100, 1000]  # Valores de número de condición a probar
@@ -42,6 +41,11 @@ for condition_value in num_condition_values:
     A = generate_random_matrix(m, n, condition_value)
     b = np.random.randn(m)
     x_init = np.random.randn(n)
+    
+    Hessian = 2 * np.dot(A.T, A)
+    eigenvalues = np.linalg.eigvalsh(Hessian)  # Utilizar eigvalsh para matrices simétricas
+    max_eigenvalue = np.max(eigenvalues)
+    s = 1 / max_eigenvalue
     
     x_min, iterations = gradient_descent(A, b, s, x_init, max_iterations, target_error)
     predicted_iterations = np.log(target_error) / np.log(1 - s**2)
